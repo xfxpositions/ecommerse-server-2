@@ -21,6 +21,9 @@ passwordSchema
   .has()
   .not()
   .spaces();
+console.log(
+  isEmpty(passwordSchema.validate("kirwa_$)#99_w", { details: true }))
+);
 
 const userNameSchema = new passwordValidator();
 userNameSchema.lowercase().max(32).min(3).has().not().spaces();
@@ -37,15 +40,33 @@ const userSchema: Schema<IUser & Document> = new Schema({
     type: String,
     required: true,
     unique: true,
-    validate: userNameSchema.validate.bind(userNameSchema),
+    validate: {
+      validator: (v: any) => {
+        console.log(v);
+        return userNameSchema.validate(v, { details: true });
+      },
+    },
   },
   name: { type: String, required: true },
   password: {
     type: String,
     required: true,
-    validate: passwordSchema.validate.bind(passwordSchema),
+    validate: {
+      validator: (v) => {
+        console.log(v);
+        const validationErrors = passwordSchema.validate(v, { list: true });
+        return validationErrors.length === 0;
+      },
+      message: (v) => {
+        console.log(passwordSchema.validate(v.value, { details: true }));
+        const validationErrors = passwordSchema.validate(v.value, {
+          details: true,
+        });
+        return validationErrors.map((error) => error.message).join(", ");
+      },
+    },
   },
-  passwordSalt: { type: String, required: true },
+  passwordSalt: { type: String, required: false },
   adresses: {
     type: [String],
     required: false,
