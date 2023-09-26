@@ -2,6 +2,8 @@
 
 bun.lockb
 /logs
+public.cer
+private.key
 
 # dependencies
 /node_modules
