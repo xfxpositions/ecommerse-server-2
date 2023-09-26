@@ -38,6 +38,7 @@ async function generateRsaKeys() {
   */
   const options = {
     modulusLength: 4096, //set length to 4096, min len is 2048
+    extractable: true,
   };
 
   const { publicKey, privateKey } = await jose.generateKeyPair(alg, options); //declare public and private key
