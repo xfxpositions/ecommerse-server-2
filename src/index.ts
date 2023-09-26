@@ -2,12 +2,14 @@ import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import userRoutes from "./routes/user";
 import loggerMiddleWare from "./middlewares/logger";
+import authMiddleWare from "./middlewares/auth";
 
 const port = process.env?.PORT || 3000;
 
 const app = new Elysia();
 
 app.use(loggerMiddleWare);
+app.use(authMiddleWare);
 
 app.get("/", () => {
   return new Response("Hello!");
@@ -19,7 +21,7 @@ app.use(
     documentation: {
       info: {
         title: "E-Commerse documentation",
-        version: process.env.npm_package_version,
+        version: process.env.npm_package_version || "unknown version",
       },
       tags: [
         { name: "default", description: "General endpoints" },
