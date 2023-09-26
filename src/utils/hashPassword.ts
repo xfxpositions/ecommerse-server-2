@@ -1,13 +1,12 @@
-import argon2, { hash } from "argon2";
 import { randomBytes } from "crypto";
 import IHashedPassword from "../types/hashedPassword";
 import logger from "../logger";
 
 async function hashPassword(password: string): Promise<IHashedPassword> {
-  const saltKey = randomBytes(32);
+  const saltKey = randomBytes(32).toString();
 
   try {
-    const hash = await argon2.hash(password, { salt: saltKey });
+    const hash = await Bun.password.hash(password + saltKey.toString());
     const HashedPassword: IHashedPassword = {
       hash: hash,
       saltKey: saltKey,
@@ -19,9 +18,9 @@ async function hashPassword(password: string): Promise<IHashedPassword> {
   }
 }
 
-async function verifyHash(hash: string, password: string, salt: Buffer) {
+async function verifyHash(hash: string, password: string, salt: string) {
   try {
-    const result = await argon2.verify(hash, password, { salt: salt });
+    const result = await Bun.password.verify(password, hash);
     return result;
   } catch (err) {
     logger.error("some error happened while trying to hash password ", err);

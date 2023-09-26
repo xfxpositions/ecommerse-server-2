@@ -1,6 +1,6 @@
 interface IHashedPassword {
   hash: string;
-  saltKey: Buffer;
+  saltKey: string;
 }
 
 export default IHashedPassword;
