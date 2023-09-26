@@ -1,10 +1,13 @@
 import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import userRoutes from "./routes/user";
+import loggerMiddleWare from "./middlewares/logger";
 
 const port = process.env?.PORT || 3000;
 
 const app = new Elysia();
+
+app.use(loggerMiddleWare);
 
 app.get("/", () => {
   return new Response("Hello!");
