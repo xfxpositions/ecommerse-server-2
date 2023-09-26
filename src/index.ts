@@ -3,15 +3,23 @@ import { swagger } from "@elysiajs/swagger";
 import userRoutes from "./routes/user";
 import loggerMiddleWare from "./middlewares/logger";
 import authMiddleWare from "./middlewares/auth";
+import dbConnect from "./db/connect";
+import logger from "./logger";
 
 const port = process.env?.PORT || 3000;
 
 const app = new Elysia();
 
+// log
 app.onStart(() => {
-  console.log(
-    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  logger.info(
+    `Elysia is running at ${app.server?.hostname}:${app.server?.port}`
   );
+});
+
+// connect to database
+app.onStart(() => {
+  dbConnect();
 });
 
 app.use(loggerMiddleWare);
