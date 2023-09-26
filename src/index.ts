@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
+import userRoutes from "./routes/user";
 
 const port = process.env?.PORT || 3000;
 
@@ -25,6 +26,8 @@ app.use(
     },
   })
 );
+
+app.group("/v1", (app) => app.use(userRoutes));
 
 app.listen(port);
 
