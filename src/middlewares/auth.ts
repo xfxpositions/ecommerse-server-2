@@ -3,6 +3,10 @@ import { Elysia } from "elysia";
 
 const app = new Elysia();
 
+//check if rsa keys created
+app.onStart(async () => {
+  await jwt.checkRsaKeys();
+});
 app.onRequest(async (context) => {
   // Check if context.headers exists and if authorization is present
   if (!context.headers || !context.headers["authorization"]) {
