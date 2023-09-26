@@ -9,7 +9,7 @@ interface IUser extends Document {
   name: string;
   roles: string[];
   password: string;
-  passwordSalt: Buffer;
+  passwordSalt: string;
   adresses?: string[];
   phone?: number;
   email: string;

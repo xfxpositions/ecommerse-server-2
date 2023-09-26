@@ -1,16 +1,17 @@
-import mongoose, { InferSchemaType, Schema, model } from "mongoose";
-import IUser from "../types/user";
-import Roles from "../types/roles";
-import uniqueValidatior from "mongoose-unique-validator";
+import mongoose, { Schema, model, Document } from "mongoose";
+import uniqueValidator from "mongoose-unique-validator";
 import validator from "validator";
 import passwordValidator from "password-validator";
 import hashPasswordUtil from "../utils/hashPassword";
-import IHashedPassword from "../types/hashedPassword";
 import logger from "../logger";
 import isEmpty from "is-empty";
+import Roles from "../types/roles";
+import IUser from "../types/user";
+import IHashedPassword from "../types/hashedPassword";
 
-var passwordSchema = new passwordValidator();
+const passwordSchema = new passwordValidator();
 passwordSchema
+  .is()
   .min(8)
   .max(128)
   .has()
@@ -19,14 +20,12 @@ passwordSchema
   .lowercase()
   .has()
   .not()
-  .spaces()
-  .is()
-  .not();
+  .spaces();
 
-var userNameSchema = new passwordValidator();
+const userNameSchema = new passwordValidator();
 userNameSchema.lowercase().max(32).min(3).has().not().spaces();
 
-const userSchema: Schema = new Schema<IUser>({
+const userSchema: Schema<IUser & Document> = new Schema({
   role: {
     type: String,
     enum: Object.values(Roles),
@@ -34,28 +33,42 @@ const userSchema: Schema = new Schema<IUser>({
     default: Roles.Customer,
   },
   userId: { type: Number, required: true, unique: true },
-  username: { type: String, required: true, unique: true },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: userNameSchema.validate.bind(userNameSchema),
+  },
   name: { type: String, required: true },
-  password: { type: String, required: true, validator: passwordSchema },
-  passwordSalt: { type: Buffer, required: true },
+  password: {
+    type: String,
+    required: true,
+    validate: passwordSchema.validate.bind(passwordSchema),
+  },
+  passwordSalt: { type: String, required: true },
   adresses: {
     type: [String],
     required: false,
     default: [],
-    // max len is 10
-    validator: (v) => Array(v).length <= 10,
+    validate: (v: string[]) => v.length <= 10,
   },
   phone: {
     type: Number,
     required: false,
     unique: true,
-    validator: [validator.isMobilePhone, "Please fill a valid phone number"],
+    validate: {
+      validator: (value: number) => validator.isMobilePhone(String(value)),
+      message: "Please fill a valid phone number",
+    },
   },
   email: {
     type: String,
     required: true,
     unique: true,
-    validator: [validator.isEmail, "Please fill a valid email address"],
+    validate: {
+      validator: (value: string) => validator.isEmail(value),
+      message: "Please fill a valid email address",
+    },
   },
   verified: {
     email: {
@@ -69,60 +82,43 @@ const userSchema: Schema = new Schema<IUser>({
   },
 });
 
-type User = InferSchemaType<typeof userSchema>;
+userSchema.plugin(uniqueValidator);
 
-userSchema.plugin(uniqueValidatior);
-
-userSchema.pre("save", async function (next) {
+userSchema.pre<IUser & Document>("save", async function (next: Function) {
   if (!this.isModified("password")) return next();
   try {
     const hashedPassword: IHashedPassword = await hashPasswordUtil.hashPassword(
       this.password
     );
-    // override the cleartext password with the hashed one
+    // Override the cleartext password with the hashed one
     this.password = hashedPassword.hash;
     this.passwordSalt = hashedPassword.saltKey;
+    next();
   } catch (err) {
-    logger.error("some error happened at saving user", err);
+    logger.error("Some error happened at saving user", err);
     return next(err);
   }
 });
 
-// compare passwords
-userSchema.methods.verifyHash = function (
-  id: mongoose.ObjectId,
-  password: string,
-  cb: any
-): boolean {
-  try {
-    User.findById(id)
-      .then(async (result: User) => {
-        if (isEmpty(result)) return cb({ err: "User not found", code: 404 });
-        const userPassword: string = result.password;
-        const saltKey = result.passwordSalt;
+userSchema.methods.verifyHash = async function (
+  password: string
+): Promise<boolean> {
+  const userPassword: string = this.password;
+  const saltKey = this.passwordSalt;
 
-        try {
-          const verifyResult = await hashPasswordUtil.verifyHash(
-            userPassword,
-            password,
-            saltKey
-          );
-          return verifyResult;
-        } catch (err) {
-          logger.error("some error happened at comparing passwords", err);
-          return cb(err);
-        }
-      })
-      .catch((err) => {
-        logger.error("some error happened at comparing passwords", err);
-        return cb(err);
-      });
+  try {
+    const verifyResult = await hashPasswordUtil.verifyHash(
+      userPassword,
+      password,
+      saltKey
+    );
+    return verifyResult;
   } catch (err) {
-    logger.error("some error happened at comparing passwords", err);
-    return cb(err);
+    logger.error("Some error happened at comparing passwords", err);
+    throw err;
   }
 };
 
-const User = model("User", userSchema);
+const UserModel = model<IUser & Document>("User", userSchema);
 
-export default User;
+export default UserModel;
