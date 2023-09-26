@@ -3,10 +3,10 @@ import IHashedPassword from "../types/hashedPassword";
 import logger from "../logger";
 
 async function hashPassword(password: string): Promise<IHashedPassword> {
-  const saltKey = randomBytes(32).toString();
+  const saltKey = randomBytes(32).toString("utf-8");
 
   try {
-    const hash = await Bun.password.hash(password + saltKey.toString());
+    const hash = await Bun.password.hash(password + saltKey);
     const HashedPassword: IHashedPassword = {
       hash: hash,
       saltKey: saltKey,
