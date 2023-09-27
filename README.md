@@ -12,7 +12,7 @@
 - [x] Hashed password storing
 - [ ] User Crud
 - [ ] Dockerized
-- [ ] Role Based Authrozation
+- [ ] Role Based Authorization
 - [ ] Hashed password
 - [ ] Filtering
 - [ ] File upload
