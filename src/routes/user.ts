@@ -268,6 +268,61 @@ const userRoutes = new Elysia({ prefix: "/user" })
         tags: ["User"],
       },
     }
-  );
+  )
+  .get("/find", ({ query }) => {
+    // Define the filter object
+    const filter: { [key: string]: any } = {};
+
+    // Define the fields you want to allow for filtering (excluding password and passwordSalt)
+    const allowedFields = ["email", "userId", "name", "username", "phone"];
+
+    // Iterate over the allowed fields and add them to the filter if they exist in the query
+    allowedFields.forEach((field) => {
+      if (query[field] !== null && query[field] !== undefined) {
+        // Added this line
+        // Use a case-insensitive regex for partial matching
+        const regex = new RegExp(query[field], "i");
+        filter[field] = regex;
+      }
+    });
+    // Query the users based on the filter
+    return User.find(filter)
+      .then((users) => {
+        if (!users || users.length === 0) {
+          return new Response(
+            JSON.stringify({
+              status: "not found",
+              detail: "No users found with the provided criteria.",
+            }),
+            { status: 404 }
+          );
+        }
+
+        // Exclude password and passwordSalt fields from each user
+        const filteredUsers = users.map((user) => {
+          user.password = "";
+          user.passwordSalt = "";
+          return user;
+        });
+
+        return new Response(
+          JSON.stringify({
+            status: "success",
+            detail: "Users found.",
+            result: filteredUsers,
+          }),
+          { status: 200 }
+        );
+      })
+      .catch((error) => {
+        return new Response(
+          JSON.stringify({
+            status: "error",
+            detail: error.message,
+          }),
+          { status: 500 }
+        );
+      });
+  });
 
 export default userRoutes;
