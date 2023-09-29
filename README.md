@@ -10,7 +10,7 @@
 - [x] Jwt
 - [x] MongoDb database
 - [x] Hashed password storing
-- [ ] User Crud
+- [x] User Crud
 - [ ] Dockerized
 - [ ] Role Based Authorization
 - [ ] Hashed password
