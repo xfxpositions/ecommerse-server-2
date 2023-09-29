@@ -74,13 +74,20 @@ const userSchema: Schema<IUser & Document> = new Schema({
     validate: (v: string[]) => v.length <= 10,
   },
   phone: {
-    type: Number,
+    type: String,
     required: false,
-    unique: true,
     validate: {
-      validator: (value: number) => validator.isMobilePhone(String(value)),
+      validator: (value: string) => {
+        if (value !== "") {
+          return validator.isMobilePhone(value);
+        }
+        return true; // Allow empty string
+      },
       message: "Please fill a valid phone number",
     },
+    default: "",
+    unique: true, // Set the field as unique
+    sparse: true, // Allow multiple documents with empty strings
   },
   email: {
     type: String,

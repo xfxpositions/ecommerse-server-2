@@ -11,7 +11,7 @@ interface IUser extends Document {
   password: string;
   passwordSalt?: string;
   adresses?: string[];
-  phone?: number;
+  phone?: string;
   email: string;
   verified: {
     email: boolean;
