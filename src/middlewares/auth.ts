@@ -1,6 +1,7 @@
 import jwt from "../utils/jwt";
 import { Elysia } from "elysia";
 import { URL } from "url";
+import User from "../models/user";
 
 const app = new Elysia();
 
@@ -53,6 +54,10 @@ app.onRequest(async (context) => {
 
   try {
     await jwt.verifyJwt(token); // try to verify
+    console.log("passed");
+    // get userID from token
+    const user = jwt.decodeJwt(token);
+    console.log(user);
   } catch (err: any) {
     console.debug(`error while verifying err:${err?.code}`);
 
