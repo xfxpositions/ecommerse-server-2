@@ -121,4 +121,9 @@ async function verifyJwt(token: string): Promise<jose.JWTVerifyResult> {
   return result;
 }
 
-export default { checkRsaKeys, signJwtKey, verifyJwt };
+function decodeJwt(token: string): jose.JWTPayload {
+  const result = jose.decodeJwt(token);
+  return result;
+}
+
+export default { checkRsaKeys, signJwtKey, verifyJwt, decodeJwt };

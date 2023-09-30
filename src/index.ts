@@ -38,7 +38,7 @@ app.onStart(() => {
 });
 
 app.use(loggerMiddleWare);
-//app.use(authMiddleWare);
+app.use(authMiddleWare);
 
 app.get("/", () => {
   return new Response("Hello!");

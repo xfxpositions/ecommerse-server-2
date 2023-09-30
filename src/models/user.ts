@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, Document } from "mongoose";
+import mongoose, { Schema, model, Document, Model } from "mongoose";
 import uniqueValidator from "mongoose-unique-validator";
 import validator from "validator";
 import passwordValidator from "password-validator";
@@ -128,6 +128,11 @@ userSchema.pre<IUser & Document>("save", async function (next: Function) {
   }
 });
 
+// defining user methods
+interface IUserMethods {
+  verifyHash(hash: string): Promise<boolean>;
+}
+
 userSchema.methods.verifyHash = async function (
   password: string
 ): Promise<boolean> {
@@ -147,6 +152,8 @@ userSchema.methods.verifyHash = async function (
   }
 };
 
-const UserModel = model<IUser & Document>("User", userSchema);
+type UserModel = Model<IUser, {}, IUserMethods>;
+
+const UserModel = model<IUser & Document, UserModel>("User", userSchema);
 
 export default UserModel;
