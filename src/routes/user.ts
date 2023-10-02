@@ -9,26 +9,29 @@ const userRoutes = new Elysia({ prefix: "/user" })
   .post(
     "/login",
     async ({ body }) => {
-      User.find({ username: body.username }).then((user) => {
+      await User.findOne({ username: body.username }).then(async (user) => {
         if (!user) {
           return new Response("Unauthorized", { status: 401 });
         }
         // compare passwords
         const verifyResult = await user.verifyHash(body.password);
-        if (!passwordMatch) {
+        if (!verifyResult) {
           return new Response("Unauthorized", { status: 401 });
-        }else{
+        } else {
           const jwtResponse: IJwt = {
-            id: user.userId,
-            username: user.username;
-          } 
-      
+            id: user.userId.toString(),
+            username: user.username,
+          };
+
           const token = await jwt.signJwtKey(jwtResponse);
-          return new Response(JSON.stringify({
-            status: "success", 
-            detail: "user loggined successfully",
-            token: token
-          }), {status: 200});
+          return new Response(
+            JSON.stringify({
+              status: "success",
+              detail: "user loggined successfully",
+              token: token,
+            }),
+            { status: 200 }
+          );
         }
       });
       if (body.username == "Josef") {
