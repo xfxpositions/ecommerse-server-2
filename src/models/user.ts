@@ -52,9 +52,12 @@ const userSchema: Schema<IUser & Document> = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: (v) => {
+      validator: (v: any) => {
         console.log(v);
         const validationErrors = passwordSchema.validate(v, { list: true });
+        if (typeof validationErrors == "boolean") {
+          return validationErrors;
+        }
         return validationErrors.length === 0;
       },
       message: (v) => {
@@ -62,7 +65,7 @@ const userSchema: Schema<IUser & Document> = new Schema({
         const validationErrors = passwordSchema.validate(v.value, {
           details: true,
         });
-        return validationErrors.map((error) => error.message).join(", ");
+        return validationErrors.map((error: any) => error.message).join(", ");
       },
     },
   },
@@ -77,17 +80,22 @@ const userSchema: Schema<IUser & Document> = new Schema({
     type: String,
     required: false,
     validate: {
-      validator: (value: string) => {
+      validator: async function (value: string) {
         if (value !== "") {
-          return validator.isMobilePhone(value);
+          // Check if the value is a valid phone number
+          if (!validator.isMobilePhone(value)) {
+            throw new Error("Please fill a valid phone number");
+          }
+
+          // Check for uniqueness among non-empty phone values
+          const existingUser = await UserModel.findOne({ phone: value });
+          if (existingUser) {
+            throw new Error("Phone number is already in use");
+          }
         }
-        return true; // Allow empty string
       },
-      message: "Please fill a valid phone number",
     },
     default: "",
-    unique: true, // Set the field as unique
-    sparse: true, // Allow multiple documents with empty strings
   },
   email: {
     type: String,
@@ -110,8 +118,27 @@ const userSchema: Schema<IUser & Document> = new Schema({
   },
 });
 
-userSchema.plugin(uniqueValidator);
+userSchema.method(
+  "verifyHash",
+  async function verifyHash(password: string): Promise<boolean> {
+    const userPassword: string = this.password;
+    const saltKey: string = this.passwordSalt || "";
 
+    try {
+      const verifyResult = await hashPasswordUtil.verifyHash(
+        userPassword,
+        password,
+        saltKey
+      );
+      return verifyResult;
+    } catch (err) {
+      logger.error("Some error happened at comparing passwords", err);
+      throw err;
+    }
+  }
+);
+
+userSchema.plugin(uniqueValidator);
 userSchema.pre<IUser & Document>("save", async function (next: Function) {
   if (!this.isModified("password")) return next();
   try {
@@ -132,28 +159,7 @@ userSchema.pre<IUser & Document>("save", async function (next: Function) {
 interface IUserMethods {
   verifyHash(hash: string): Promise<boolean>;
 }
-
-userSchema.methods.verifyHash = async function (
-  password: string
-): Promise<boolean> {
-  const userPassword: string = this.password;
-  const saltKey = this.passwordSalt;
-
-  try {
-    const verifyResult = await hashPasswordUtil.verifyHash(
-      userPassword,
-      password,
-      saltKey
-    );
-    return verifyResult;
-  } catch (err) {
-    logger.error("Some error happened at comparing passwords", err);
-    throw err;
-  }
-};
-
 type UserModel = Model<IUser, {}, IUserMethods>;
 
-const UserModel = model<IUser & Document, UserModel>("User", userSchema);
-
+const UserModel = model<IUser, UserModel>("User", userSchema);
 export default UserModel;
