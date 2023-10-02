@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { ConnectOptions } from "mongoose";
 import logger from "../logger";
 
 if (!process.env?.DB_URI) {
@@ -10,13 +9,17 @@ if (!process.env?.DB_URI) {
 const uri = process.env.DB_URI;
 
 function connect() {
+  logger.info("trying to connect db");
   const db = mongoose
     .connect(uri)
-    .then((db) => db)
+    .then((db) => {
+      logger.info("connected to db");
+      return db;
+    })
     .catch((e) => {
       logger.error("some error happened while connecting to db" + e);
+      process.exit(1);
     });
-  logger.info("connected to db");
   return db;
 }
 
