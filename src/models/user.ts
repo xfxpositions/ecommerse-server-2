@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, Document, Model } from "mongoose";
+import { Schema, model, Document, Model } from "mongoose";
 import uniqueValidator from "mongoose-unique-validator";
 import validator from "validator";
 import passwordValidator from "password-validator";
@@ -79,23 +79,8 @@ const userSchema: Schema<IUser & Document> = new Schema({
   phone: {
     type: String,
     required: false,
-    validate: {
-      validator: async function (value: string) {
-        if (value !== "") {
-          // Check if the value is a valid phone number
-          if (!validator.isMobilePhone(value)) {
-            throw new Error("Please fill a valid phone number");
-          }
-
-          // Check for uniqueness among non-empty phone values
-          const existingUser = await UserModel.findOne({ phone: value });
-          if (existingUser) {
-            throw new Error("Phone number is already in use");
-          }
-        }
-      },
-    },
-    default: "",
+    sparse: true,
+    unique: true,
   },
   email: {
     type: String,
@@ -114,6 +99,23 @@ const userSchema: Schema<IUser & Document> = new Schema({
     phone: {
       type: Boolean,
       required: false,
+      unique: true,
+      validate: {
+        validator: async function (value: string) {
+          if (value !== "") {
+            // Check if the value is a valid phone number
+            if (!validator.isMobilePhone(value)) {
+              throw new Error("Please fill a valid phone number");
+            }
+
+            // Check for uniqueness among non-empty phone values
+            const existingUser = await UserModel.findOne({ phone: value });
+            if (existingUser) {
+              throw new Error("Phone number is already in use");
+            }
+          }
+        },
+      },
     },
   },
 });
