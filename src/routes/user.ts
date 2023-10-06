@@ -4,69 +4,146 @@ import IJwt from "../types/jwtClaim";
 import jwt from "../utils/jwt";
 import hashPassword from "../utils/hashPassword";
 import genRandomUserId from "../utils/genRandomUserId";
+import hashPassword from "../utils/hashPassword";
 
 const userRoutes = new Elysia({ prefix: "/user" })
   .post(
     "/login",
     async ({ body }) => {
-      await User.findOne({ username: body.username }).then(async (user) => {
-        if (!user) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        // compare passwords
-        const verifyResult = await user.verifyHash(body.password);
-        if (!verifyResult) {
-          return new Response("Unauthorized", { status: 401 });
-        } else {
-          const jwtResponse: IJwt = {
-            id: user.userId.toString(),
-            username: user.username,
-          };
+      console.log("finding user");
+      const user = await User.findOne({ username: body.username });
 
-          const token = await jwt.signJwtKey(jwtResponse);
-          return new Response(
-            JSON.stringify({
-              status: "success",
-              detail: "user loggined successfully",
-              token: token,
-            }),
-            { status: 200 }
-          );
-        }
-      });
-      if (body.username == "Josef") {
-        return new Response("OK", { status: 200 });
-      } else {
-        return new Response("Unauthorized", { status: 401 });
+      const sfalseResponse = new Response(
+        JSON.stringify({
+          status: "unauthorized",
+          details: "User not found or wrong password",
+        }),
+        { status: 401 }
+      );
+
+      if (!user) {
+        console.log("user not found");
+        return sfalseResponse;
       }
+
+      // compare body and user passwords
+      const verifyResult = await hashPassword.verifyHash(
+        body.password,
+        user.password,
+        user.passwordSalt || ""
+      );
+      // const verifyResult = await user.verifyHash(body.password);
+      // if (!verifyResult) {
+      //   console.log("verification fault");
+      //   return sfalseResponse;
+      // }
+
+      // return token if verification success
+      const jwtClaims: IJwt = {
+        id: user.userId.toString(),
+        username: user.username,
+      };
+      const token = jwt.signJwtKey(jwtClaims);
+
+      return new Response(
+        JSON.stringify({
+          status: "success",
+          details: "user logged in successfully",
+          token: token,
+        })
+      );
     },
     {
+      detail: { tags: ["Auth"] },
       body: t.Object({
         username: t.String(),
         password: t.String(),
       }),
-      detail: {
-        tags: ["Auth"],
-      },
     }
   )
+  // .post(
+  //   "/login",
+  //   async ({ body }) => {
+  //     console.log("finding");
+  //     await User.findOne({ username: body.username }).then(async (user) => {
+  //       console.log("finded");
+  //       if (!user) {
+  //         console.log("haydaa");
+  //         return new Response(
+  //           JSON.stringify({
+  //             status: "Unauthorized",
+  //             details: "Wrong password or user not found",
+  //           }).toString(),
+  //           { status: 401 }
+  //         );
+  //       }
+  //       // compare passwords
+  //       const verifyResult = await user.verifyHash(body.password);
+  //       console.log("verifyResult", verifyResult);
+  //       if (!verifyResult) {
+  //         return new Response(
+  //           JSON.stringify({
+  //             status: "Unauthorized",
+  //             details: "Wrong password or user not found",
+  //           }),
+  //           {
+  //             status: 401,
+  //           }
+  //         );
+  //       } else {
+  //         console.log("burda");
+  //         const jwtResponse: IJwt = {
+  //           id: user.userId.toString(),
+  //           username: user.username,
+  //         };
+
+  //         const token = await jwt.signJwtKey(jwtResponse);
+  //         return new Response(
+  //           JSON.stringify({
+  //             status: "success",
+  //             detail: "user loggined successfully",
+  //             token: token,
+  //           }),
+  //           { status: 200 }
+  //         );
+  //       }
+  //     });
+  //   },
+  //   {
+  //     body: t.Object({
+  //       username: t.String(),
+  //       password: t.String(),
+  //     }),
+  //     detail: {
+  //       tags: ["Auth"],
+  //     },
+  //   }
+  // )
   .post(
     "/register",
     async ({ body }) => {
-      //const { hash, saltKey } = await hashPassword.hashPassword(body.password);
+      const { hash, saltKey } = await hashPassword.hashPassword(body.password);
 
       const userId = await genRandomUserId();
-      console.log(userId);
+      console.log("userid", userId);
       await User.create({
         username: body.username,
-        password: body.password,
+        password: hash,
         email: body.email,
         userId: userId,
         name: body.name,
       })
-        .then((result) => {})
+        .then((result) => {
+          console.trace("kirwe");
+          return new Response(
+            JSON.stringify({
+              status: "success",
+              details: "User created",
+            })
+          );
+        })
         .catch((err) => {
-          //console.log(err);
+          console.trace(err);
           throw err;
         });
       console.log("hoo");
