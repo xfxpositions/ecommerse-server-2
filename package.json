@@ -12,6 +12,7 @@
     "@types/validator": "^13.11.2",
     "crypto": "^1.0.1",
     "elysia": "latest",
+    "elysia-ip": "^0.0.4",
     "is-empty": "^1.2.0",
     "jose": "^4.14.6",
     "moment-timezone": "^0.5.43",
