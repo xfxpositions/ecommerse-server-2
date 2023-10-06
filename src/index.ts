@@ -5,12 +5,23 @@ import loggerMiddleWare from "./middlewares/logger";
 import authMiddleWare from "./middlewares/auth";
 import dbConnect from "./db/connect";
 import logger from "./logger";
+import { ip } from "elysia-ip";
 
 const port = process.env?.PORT || 3000;
 
 const app = new Elysia();
 
+// getting request ip
+// not working
+//app.use(ip());
+
 app.onError(({ code, error }) => {
+  if (process.env.ERR_LOG) {
+    logger.error(error);
+  }
+  if (process.env.ERR_TRACE_CONSOLE) {
+    console.trace(error);
+  }
   const response_text = JSON.stringify({
     error: { code: code, message: error.toString() },
   });
@@ -40,8 +51,8 @@ app.onStart(() => {
 app.use(loggerMiddleWare);
 app.use(authMiddleWare);
 
-app.get("/", () => {
-  return new Response("Hello!");
+app.get("/", (context) => {
+  return new Response(`Hello`);
 });
 
 app.use(
