@@ -159,7 +159,7 @@ userSchema.pre<IUser & Document>("save", async function (next: Function) {
 
 // defining user methods
 interface IUserMethods {
-  verifyHash(hash: string): Promise<boolean>;
+  verifyHash(password: string): Promise<boolean>;
 }
 type UserModel = Model<IUser, {}, IUserMethods>;
 
