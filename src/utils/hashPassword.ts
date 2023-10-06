@@ -1,12 +1,12 @@
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import IHashedPassword from "../types/hashedPassword";
 import logger from "../logger";
 
 async function hashPassword(password: string): Promise<IHashedPassword> {
-  const saltKey = randomBytes(32).toString("utf-8");
+  const saltKey = randomUUID();
 
   try {
-    const hash = await Bun.password.hash(password + saltKey);
+    const hash = await Bun.password.hash(password + saltKey, "bcrypt");
     const HashedPassword: IHashedPassword = {
       hash: hash,
       saltKey: saltKey,
@@ -18,9 +18,9 @@ async function hashPassword(password: string): Promise<IHashedPassword> {
   }
 }
 
-async function verifyHash(hash: string, password: string, salt: string) {
+async function verifyHash(hash: string, password: string, saltKey: string) {
   try {
-    const result = await Bun.password.verify(password, hash);
+    const result = await Bun.password.verify(password, hash, "bcrypt");
     return result;
   } catch (err) {
     logger.error("some error happened while trying to hash password ", err);
