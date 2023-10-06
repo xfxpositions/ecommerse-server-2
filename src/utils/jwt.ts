@@ -19,7 +19,7 @@ const publicKeyPath: string = path.join(
   import.meta.dir,
   "..",
   "..",
-  process.env.JWT_PUBLIC_KEY_PATH || "./public.cer"
+  process.env.JWT_PUBLIC_KEY_PATH_ || "./public.cer"
 );
 /* 
 | -> package.json
@@ -28,7 +28,7 @@ const publicKeyPath: string = path.join(
 | -> public.key
 */
 
-const alg = "RS256"; // algorithm, see others in jwt.io
+const alg = "RS256"; // algorithm, see others in jwt.io */
 
 async function generateRsaKeys() {
   /*define options (optional)
